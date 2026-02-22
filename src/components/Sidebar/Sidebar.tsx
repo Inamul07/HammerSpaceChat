@@ -116,6 +116,7 @@ export const Sidebar = () => {
 							display: "flex",
 							justifyContent: "space-between",
 							alignItems: "center",
+							marginTop: 8,
 						}}
 					>
 						<Text strong style={{ color: "#fff", fontSize: 16 }}>

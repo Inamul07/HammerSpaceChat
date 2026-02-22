@@ -239,32 +239,33 @@ After completing Phase 3, encountered and resolved several critical issues durin
 **Issues Fixed**:
 
 1. **Module System Mismatch**
-   - Problem: Electron was looking for CommonJS but TypeScript was outputting ES modules
-   - Solution: Changed `tsconfig.electron.json` module setting from "ESNext" to "CommonJS"
-   - Impact: All Electron main process code now properly compiles to CommonJS
+    - Problem: Electron was looking for CommonJS but TypeScript was outputting ES modules
+    - Solution: Changed `tsconfig.electron.json` module setting from "ESNext" to "CommonJS"
+    - Impact: All Electron main process code now properly compiles to CommonJS
 
 2. **Import.meta.url Incompatibility**
-   - Problem: `import.meta.url` and `fileURLToPath` only work with ES modules
-   - Solution: Removed import.meta usage, using built-in `__dirname` instead
-   - Files Modified: `electron/main.ts`
+    - Problem: `import.meta.url` and `fileURLToPath` only work with ES modules
+    - Solution: Removed import.meta usage, using built-in `__dirname` instead
+    - Files Modified: `electron/main.ts`
 
 3. **Schema Version Table Initialization**
-   - Problem: PostgreSQL cannot execute CREATE TABLE and SELECT in a single query string
-   - Error: "relation schema_version does not exist"
-   - Solution: Split into separate SQL constants:
-     - `CREATE_VERSION_TABLE_SQL` - Creates the table if not exists
-     - `GET_VERSION_SQL` - Queries the version
-   - Modified `initializeSchema()` to call CREATE before SELECT
-   - Files Modified: `electron/database/schema.ts`, `electron/database/manager.ts`
+    - Problem: PostgreSQL cannot execute CREATE TABLE and SELECT in a single query string
+    - Error: "relation schema_version does not exist"
+    - Solution: Split into separate SQL constants:
+        - `CREATE_VERSION_TABLE_SQL` - Creates the table if not exists
+        - `GET_VERSION_SQL` - Queries the version
+    - Modified `initializeSchema()` to call CREATE before SELECT
+    - Files Modified: `electron/database/schema.ts`, `electron/database/manager.ts`
 
 4. **Build Output Path Issues**
-   - Problem: TypeScript was outputting to `dist-electron/electron/main.js` instead of `dist-electron/main.js`
-   - Solution: Created forwarding files that require the actual compiled files
-   - Files Created: `dist-electron/main.js`, `dist-electron/preload.js`
+    - Problem: TypeScript was outputting to `dist-electron/electron/main.js` instead of `dist-electron/main.js`
+    - Solution: Created forwarding files that require the actual compiled files
+    - Files Created: `dist-electron/main.js`, `dist-electron/preload.js`
 
 **Outcome**: App now builds successfully and schema initialization works properly. Ready for first launch and database connection testing.
 
 **Key Learnings**:
+
 - Electron main process requires CommonJS (require/exports), not ES modules
 - PostgreSQL pg client requires separate query calls for DDL and DML operations
 - Module format must be consistent throughout the Electron main process
