@@ -56,6 +56,7 @@ export const useAppStore = create<AppState>((set) => ({
 	// Settings
 	settings: {
 		geminiApiKey: "",
+		geminiModel: "gemini-2.5-flash",
 		databaseConfig: null,
 		ragConfig: DEFAULT_RAG_CONFIG,
 	},

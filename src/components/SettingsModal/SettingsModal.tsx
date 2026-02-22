@@ -10,6 +10,7 @@ import {
 	Space,
 	Typography,
 	Alert,
+	Select,
 } from "antd";
 import {
 	DatabaseOutlined,
@@ -20,6 +21,7 @@ import {
 	QuestionCircleOutlined,
 } from "@ant-design/icons";
 import { useAppStore } from "../../store";
+import { GEMINI_MODELS } from "../../types";
 import "./SettingsModal.css";
 
 const { Text, Paragraph } = Typography;
@@ -362,6 +364,31 @@ export const SettingsModal = () => {
 								/>
 
 								<Form layout="vertical">
+									<Form.Item
+										label="Gemini Model"
+										extra={
+											<Text
+												type="secondary"
+												style={{ fontSize: 12 }}
+											>
+												Select the Gemini model to use
+												for generation. Pro models are
+												more capable but slower.
+											</Text>
+										}
+									>
+										<Select
+											value={settings.geminiModel}
+											onChange={(value) =>
+												setSettings({
+													geminiModel: value,
+												})
+											}
+											options={GEMINI_MODELS}
+											style={{ width: "100%" }}
+										/>
+									</Form.Item>
+
 									<Form.Item
 										label="Google Gemini API Key"
 										extra={

@@ -8,6 +8,7 @@ import {
 	Avatar,
 	Tag,
 	Spin,
+	message as antMessage,
 } from "antd";
 import {
 	SendOutlined,
@@ -18,6 +19,7 @@ import {
 } from "@ant-design/icons";
 import { useAppStore } from "../../store";
 import { Message } from "../../types";
+import { sendMessageStreaming } from "../../utils/ai";
 import "./ChatView.css";
 
 const { TextArea } = Input;
@@ -25,6 +27,7 @@ const { Text, Title } = Typography;
 
 export const ChatView = () => {
 	const {
+		settings,
 		threads,
 		currentThreadId,
 		messages,
@@ -34,9 +37,12 @@ export const ChatView = () => {
 		setMessages,
 		setDocuments,
 		setLoadingMessages,
+		setSendingMessage,
+		addMessage,
 	} = useAppStore();
 
 	const [inputMessage, setInputMessage] = useState("");
+	const [streamingMessage, setStreamingMessage] = useState("");
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
 	const currentThread = threads.find((t) => t.id === currentThreadId);
@@ -81,23 +87,85 @@ export const ChatView = () => {
 		loadDocuments();
 	}, [currentThreadId]);
 
-	// Auto-scroll to bottom when new messages arrive
+	// Auto-scroll to bottom when new messages arrive or streaming updates
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-	}, [messages]);
+	}, [messages, streamingMessage]);
 
 	const handleSendMessage = async () => {
 		if (!inputMessage.trim() || !currentThreadId || isSendingMessage)
 			return;
 
+		// Check if API key is set
+		if (!settings.geminiApiKey) {
+			antMessage.error(
+				"Please set your Gemini API key in Settings first",
+			);
+			return;
+		}
+
 		const userMessage = inputMessage.trim();
 		setInputMessage("");
+		setSendingMessage(true);
+		setStreamingMessage("");
 
-		// This is a placeholder - actual AI integration will be in Phase 4
-		console.log("Sending message:", userMessage);
+		try {
+			// Save user message to database
+			const userMsgResult = await window.electronAPI.message.create(
+				currentThreadId,
+				"user",
+				userMessage,
+			);
 
-		// For now, just show a placeholder response
-		// In Phase 4, we'll integrate Gemini API here
+			if (!userMsgResult.success || !userMsgResult.message) {
+				throw new Error(
+					userMsgResult.error || "Failed to save user message",
+				);
+			}
+
+			// Add user message to UI
+			addMessage(userMsgResult.message);
+
+			// Get AI response with streaming
+			let fullResponse = "";
+			await sendMessageStreaming(
+				userMessage,
+				settings.geminiApiKey,
+				settings.geminiModel,
+				(chunk) => {
+					fullResponse += chunk;
+					setStreamingMessage(fullResponse);
+				},
+			);
+
+			// Clear streaming message
+			setStreamingMessage("");
+
+			// Save assistant message to database
+			const assistantMsgResult = await window.electronAPI.message.create(
+				currentThreadId,
+				"assistant",
+				fullResponse,
+			);
+
+			if (!assistantMsgResult.success || !assistantMsgResult.message) {
+				throw new Error(
+					assistantMsgResult.error ||
+						"Failed to save assistant message",
+				);
+			}
+
+			// Add assistant message to UI
+			addMessage(assistantMsgResult.message);
+		} catch (error: any) {
+			console.error("Error sending message:", error);
+			antMessage.error(
+				error.message || "Failed to send message. Please try again.",
+			);
+			setStreamingMessage("");
+		} finally {
+			setSendingMessage(false);
+		}
 	};
 
 	if (!currentThread) {
@@ -266,6 +334,33 @@ export const ChatView = () => {
 								</div>
 							</div>
 						))}
+
+						{/* Streaming message being typed */}
+						{streamingMessage && (
+							<div className="message message-assistant">
+								<Avatar
+									icon={<RobotOutlined />}
+									style={{
+										backgroundColor: "#52c41a",
+									}}
+								/>
+								<div className="message-content">
+									<div className="message-header">
+										<Text strong>Assistant</Text>
+										<Text
+											type="secondary"
+											style={{ fontSize: 12 }}
+										>
+											typing...
+										</Text>
+									</div>
+									<div className="message-text">
+										{streamingMessage}
+									</div>
+								</div>
+							</div>
+						)}
+
 						<div ref={messagesEndRef} />
 					</>
 				)}

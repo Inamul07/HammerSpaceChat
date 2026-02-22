@@ -56,9 +56,7 @@ export interface ElectronAPI {
 			role: "user" | "assistant",
 			content: string,
 		) => Promise<{ success: boolean; message?: Message; error?: string }>;
-		list: (
-			threadId: string,
-		) => Promise<{
+		list: (threadId: string) => Promise<{
 			success: boolean;
 			messages?: Message[];
 			error?: string;
@@ -78,9 +76,7 @@ export interface ElectronAPI {
 			fileType: "pdf" | "txt" | "md" | "docx",
 			fileSize: number,
 		) => Promise<{ success: boolean; document?: Document; error?: string }>;
-		list: (
-			threadId: string,
-		) => Promise<{
+		list: (threadId: string) => Promise<{
 			success: boolean;
 			documents?: Document[];
 			error?: string;
@@ -182,8 +178,35 @@ export interface RAGConfig {
 	similarityThreshold: number;
 }
 
+export type GeminiModel =
+	| "gemini-2.5-pro"
+	| "gemini-2.5-flash"
+	| "gemini-2.5-flash-lite"
+	| "gemini-1.5-pro"
+	| "gemini-1.5-flash"
+	| "gemini-pro";
+
+export const GEMINI_MODELS: { value: GeminiModel; label: string }[] = [
+	{
+		value: "gemini-2.5-flash",
+		label: "Gemini 2.5 Flash (Recommended)",
+	},
+	{
+		value: "gemini-2.5-pro",
+		label: "Gemini 2.5 Pro (Most Capable)",
+	},
+	{
+		value: "gemini-2.5-flash-lite",
+		label: "Gemini 2.5 Flash Lite (Fast & Cost-Efficient)",
+	},
+	{ value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" },
+	{ value: "gemini-1.5-flash", label: "Gemini 1.5 Flash" },
+	{ value: "gemini-pro", label: "Gemini Pro (Legacy)" },
+];
+
 export interface AppSettings {
 	geminiApiKey: string;
+	geminiModel: GeminiModel;
 	databaseConfig: DatabaseConfig | null;
 	ragConfig: RAGConfig;
 }
