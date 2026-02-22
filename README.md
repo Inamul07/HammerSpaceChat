@@ -272,12 +272,31 @@ After completing Phase 3, encountered and resolved several critical issues durin
 
 ---
 
-### 📅 Phase 4: Normal Chat Mode
+### ✅ Phase 4: Normal Chat Mode (COMPLETED)
 
-- [ ] Gemini API integration
-- [ ] Streaming response handling
-- [ ] Message sending/receiving
-- [ ] Thread creation and management
+- [x] Gemini API integration with model selection
+- [x] Streaming response handling with real-time display
+- [x] Message sending/receiving with database persistence
+- [x] Thread creation and management (completed in Phase 3)
+- [x] Configurable model selection (Gemini 2.5 Pro, Flash, Flash Lite, 1.5 series)
+- [x] Error handling with user-friendly messages
+- [x] API key validation
+
+**Outcome**: Full Normal Chat Mode working with streaming AI responses. Users can create chat threads, send messages, and receive AI responses in real-time.
+
+**Files Created/Modified**:
+- `src/utils/ai.ts` - Gemini API integration with streaming support
+- Updated `src/components/ChatView/ChatView.tsx` - Added message sending, streaming display, error handling
+- Updated `src/components/SettingsModal/SettingsModal.tsx` - Added model selector dropdown
+- Updated `src/types/index.ts` - Added GeminiModel type and GEMINI_MODELS constant
+- Updated `src/store/index.ts` - Added geminiModel to settings state
+
+**Available Models**:
+- Gemini 2.5 Flash (Recommended) - Industry leader for price-to-performance
+- Gemini 2.5 Pro (Most Capable) - High-end reasoning with massive context
+- Gemini 2.5 Flash Lite - Ultra-cost-efficient for simple tasks
+- Gemini 1.5 Pro/Flash - Stable legacy versions
+- Gemini Pro - Original legacy model
 
 ---
 
@@ -319,6 +338,6 @@ MIT
 ---
 
 **Last Updated**: February 22, 2026  
-**Current Phase**: Phase 3.5 Complete ✅ (Launch troubleshooting resolved)  
-**Next Phase**: Phase 4 - Normal Chat Mode (Gemini API Integration)  
-**Status**: App builds successfully, ready for first launch and database connection testing
+**Current Phase**: Phase 4 Complete ✅ (Normal Chat Mode fully functional)  
+**Next Phase**: Phase 5 - RAG Mode Part 1 (Document Processing)  
+**Status**: Chat mode working with streaming AI responses, configurable model selection, and full database persistence
