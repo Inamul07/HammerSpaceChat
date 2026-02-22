@@ -17,6 +17,8 @@ import {
 	FileTextOutlined,
 	UploadOutlined,
 } from "@ant-design/icons";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useAppStore } from "../../store";
 import { Message } from "../../types";
 import { sendMessageStreaming } from "../../utils/ai";
@@ -294,8 +296,10 @@ export const ChatView = () => {
 											).toLocaleTimeString()}
 										</Text>
 									</div>
-									<div className="message-text">
-										{message.content}
+									<div className="message-text markdown-content">
+										<ReactMarkdown remarkPlugins={[remarkGfm]}>
+											{message.content}
+										</ReactMarkdown>
 									</div>
 									{message.sources &&
 										message.sources.length > 0 && (
@@ -354,8 +358,10 @@ export const ChatView = () => {
 											typing...
 										</Text>
 									</div>
-									<div className="message-text">
-										{streamingMessage}
+									<div className="message-text markdown-content">
+										<ReactMarkdown remarkPlugins={[remarkGfm]}>
+											{streamingMessage}
+										</ReactMarkdown>
 									</div>
 								</div>
 							</div>

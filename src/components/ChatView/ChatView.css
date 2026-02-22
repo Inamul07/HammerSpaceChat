@@ -137,3 +137,157 @@
 .chat-input::placeholder {
 	color: #666;
 }
+
+/* Markdown Content Styling */
+.markdown-content {
+	font-size: 14px;
+	line-height: 1.7;
+}
+
+.markdown-content p {
+	margin: 0 0 12px 0;
+}
+
+.markdown-content p:last-child {
+	margin-bottom: 0;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+	margin: 16px 0 10px 0;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.markdown-content h1:first-child,
+.markdown-content h2:first-child,
+.markdown-content h3:first-child {
+	margin-top: 0;
+}
+
+.markdown-content h1 {
+	font-size: 1.8em;
+	border-bottom: 1px solid #2a2a2a;
+	padding-bottom: 8px;
+}
+
+.markdown-content h2 {
+	font-size: 1.5em;
+	border-bottom: 1px solid #2a2a2a;
+	padding-bottom: 6px;
+}
+
+.markdown-content h3 {
+	font-size: 1.3em;
+}
+
+.markdown-content h4 {
+	font-size: 1.1em;
+}
+
+.markdown-content code {
+	background: rgba(255, 255, 255, 0.05);
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-family: "Consolas", "Monaco", "Courier New", monospace;
+	font-size: 0.9em;
+	color: #ff6b6b;
+}
+
+.markdown-content pre {
+	background: rgba(0, 0, 0, 0.3);
+	border: 1px solid #2a2a2a;
+	border-radius: 6px;
+	padding: 12px;
+	overflow-x: auto;
+	margin: 12px 0;
+}
+
+.markdown-content pre code {
+	background: transparent;
+	padding: 0;
+	color: #fff;
+	font-size: 0.9em;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+	margin: 12px 0;
+	padding-left: 24px;
+}
+
+.markdown-content li {
+	margin: 6px 0;
+}
+
+.markdown-content blockquote {
+	border-left: 4px solid #1677ff;
+	margin: 12px 0;
+	padding: 8px 16px;
+	background: rgba(22, 119, 255, 0.05);
+	color: #ccc;
+}
+
+.markdown-content a {
+	color: #1677ff;
+	text-decoration: none;
+}
+
+.markdown-content a:hover {
+	text-decoration: underline;
+}
+
+.markdown-content table {
+	border-collapse: collapse;
+	width: 100%;
+	margin: 12px 0;
+	font-size: 0.9em;
+}
+
+.markdown-content th,
+.markdown-content td {
+	border: 1px solid #2a2a2a;
+	padding: 8px 12px;
+	text-align: left;
+}
+
+.markdown-content th {
+	background: rgba(255, 255, 255, 0.05);
+	font-weight: 600;
+}
+
+.markdown-content tr:nth-child(even) {
+	background: rgba(255, 255, 255, 0.02);
+}
+
+.markdown-content img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 6px;
+	margin: 12px 0;
+}
+
+.markdown-content hr {
+	border: none;
+	border-top: 1px solid #2a2a2a;
+	margin: 20px 0;
+}
+
+.markdown-content strong {
+	font-weight: 600;
+	color: #fff;
+}
+
+.markdown-content em {
+	font-style: italic;
+	color: #ccc;
+}
+
+.markdown-content del {
+	text-decoration: line-through;
+	color: #888;
+}
