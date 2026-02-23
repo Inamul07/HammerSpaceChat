@@ -14,6 +14,55 @@ import * as documentUtils from "./utils/documents";
 // __dirname is automatically available in CommonJS
 let mainWindow: BrowserWindow | null = null;
 
+// ====================
+// Settings Persistence Helper Functions
+// ====================
+
+/**
+ * Get the path to the settings file in the user data directory
+ */
+function getSettingsPath(): string {
+	const userDataPath = app.getPath("userData");
+	return path.join(userDataPath, "settings.json");
+}
+
+/**
+ * Load settings from disk
+ */
+function loadSettings(): any {
+	try {
+		const settingsPath = getSettingsPath();
+		if (fs.existsSync(settingsPath)) {
+			const data = fs.readFileSync(settingsPath, "utf8");
+			return JSON.parse(data);
+		}
+		return null;
+	} catch (error) {
+		console.error("Error loading settings:", error);
+		return null;
+	}
+}
+
+/**
+ * Save settings to disk
+ */
+function saveSettings(settings: any): void {
+	try {
+		const settingsPath = getSettingsPath();
+		const userDataPath = app.getPath("userData");
+		
+		// Ensure user data directory exists
+		if (!fs.existsSync(userDataPath)) {
+			fs.mkdirSync(userDataPath, { recursive: true });
+		}
+		
+		fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), "utf8");
+	} catch (error) {
+		console.error("Error saving settings:", error);
+		throw error;
+	}
+}
+
 function createWindow() {
 	mainWindow = new BrowserWindow({
 		width: 1400,
@@ -521,5 +570,35 @@ ipcMain.handle(
 		}
 	},
 );
+
+// ====================
+// Settings Persistence IPC Handlers
+// ====================
+
+/**
+ * Save settings to disk
+ */
+ipcMain.handle("settings:save", async (_, settings) => {
+	try {
+		saveSettings(settings);
+		return { success: true };
+	} catch (error: any) {
+		console.error("Settings save error:", error);
+		return { success: false, error: error.message };
+	}
+});
+
+/**
+ * Load settings from disk
+ */
+ipcMain.handle("settings:load", async () => {
+	try {
+		const settings = loadSettings();
+		return { success: true, settings };
+	} catch (error: any) {
+		console.error("Settings load error:", error);
+		return { success: false, error: error.message, settings: null };
+	}
+});
 
 export {};

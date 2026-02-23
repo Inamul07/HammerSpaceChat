@@ -145,6 +145,14 @@ export interface ElectronAPI {
 			error?: string;
 		}>;
 	};
+	settings: {
+		save: (settings: any) => Promise<{ success: boolean; error?: string }>;
+		load: () => Promise<{
+			success: boolean;
+			settings?: any;
+			error?: string;
+		}>;
+	};
 	shell: {
 		openExternal: (
 			url: string,

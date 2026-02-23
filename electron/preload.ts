@@ -121,6 +121,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
 			ipcRenderer.invoke("messageSource:getByMessage", messageId),
 	},
 
+	// Settings operations
+	settings: {
+		save: (settings: any) => ipcRenderer.invoke("settings:save", settings),
+		load: () => ipcRenderer.invoke("settings:load"),
+	},
+
 	// Shell operations
 	shell: {
 		openExternal: (url: string) =>

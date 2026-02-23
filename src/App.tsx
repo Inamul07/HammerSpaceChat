@@ -1,10 +1,16 @@
+import { useEffect } from "react";
 import { ConfigProvider, theme } from "antd";
 import { Layout, Sidebar, ChatView, SettingsModal } from "./components";
 import { useAppStore } from "./store";
 import "./App.css";
 
 function App() {
-	const { isSidebarCollapsed } = useAppStore();
+	const { isSidebarCollapsed, loadSettings } = useAppStore();
+
+	// Load saved settings on app startup
+	useEffect(() => {
+		loadSettings();
+	}, [loadSettings]);
 
 	return (
 		<ConfigProvider

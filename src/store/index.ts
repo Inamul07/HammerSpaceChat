@@ -4,7 +4,8 @@ import { Thread, Message, Document, RAGConfig, AppSettings } from "../types";
 interface AppState {
 	// Settings
 	settings: AppSettings;
-	setSettings: (settings: Partial<AppSettings>) => void;
+	setSettings: (settings: Partial<AppSettings>) => Promise<void>;
+	loadSettings: () => Promise<void>;
 
 	// Database connection
 	isDbConnected: boolean;
@@ -52,7 +53,7 @@ const DEFAULT_RAG_CONFIG: RAGConfig = {
 	similarityThreshold: 0.7,
 };
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
 	// Settings
 	settings: {
 		geminiApiKey: "",
@@ -60,10 +61,27 @@ export const useAppStore = create<AppState>((set) => ({
 		databaseConfig: null,
 		ragConfig: DEFAULT_RAG_CONFIG,
 	},
-	setSettings: (newSettings) =>
-		set((state) => ({
-			settings: { ...state.settings, ...newSettings },
-		})),
+	setSettings: async (newSettings) => {
+		const updatedSettings = { ...get().settings, ...newSettings };
+		set({ settings: updatedSettings });
+		
+		// Persist settings to disk
+		try {
+			await window.electronAPI.settings.save(updatedSettings);
+		} catch (error) {
+			console.error("Failed to save settings:", error);
+		}
+	},
+	loadSettings: async () => {
+		try {
+			const result = await window.electronAPI.settings.load();
+			if (result.success && result.settings) {
+				set({ settings: { ...get().settings, ...result.settings } });
+			}
+		} catch (error) {
+			console.error("Failed to load settings:", error);
+		}
+	},
 
 	// Database connection
 	isDbConnected: false,
