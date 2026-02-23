@@ -5,13 +5,16 @@ An AI Chat application with Normal Chat and RAG (Retrieval-Augmented Generation)
 ## 🎯 Features
 
 - **Normal Chat Mode**: Direct conversations with AI models with markdown support
-- **RAG Mode**: Context-aware chat using your documents
+- **RAG Mode**: Context-aware chat using your documents (Vector search coming soon)
 - **Thread Management**: Organize conversations in separate threads
-- **Document Processing**: Upload and process PDF, TXT, MD, and DOCX files
+- **Document Processing**: Upload and process PDF, TXT, MD, and DOCX files with intelligent chunking
+- **Vector Embeddings**: Generate 768-dimensional embeddings using gemini-embedding-001 with Matryoshka learning
+- **Batch Processing**: Memory-optimized batch processing for large documents
 - **Configurable RAG**: Customize chunk size, retrieval count, and similarity thresholds
 - **Streaming Responses**: Real-time response streaming from AI
 - **Markdown Rendering**: Full GitHub Flavored Markdown support with syntax highlighting
 - **Dark Mode UI**: Built with Ant Design for a sleek dark interface
+- **Database Versioning**: Auto-migration system for schema updates
 
 ## 🛠️ Tech Stack
 
@@ -20,7 +23,9 @@ An AI Chat application with Normal Chat and RAG (Retrieval-Augmented Generation)
 - **UI Framework**: Ant Design 5 (Dark Mode)
 - **State Management**: Zustand
 - **Database**: PostgreSQL with pgvector extension
-- **AI Provider**: Google Gemini API (with support for more providers)
+- **AI Provider**: Google Gemini API
+    - Chat: gemini-2.5-flash / gemini-2.5-pro / gemini-2.5-flash-lite
+    - Embeddings: gemini-embedding-001 (768 dimensions with Matryoshka learning)
 - **Markdown Rendering**: react-markdown + remark-gfm
 - **Syntax Highlighting**: react-syntax-highlighter (VS Code Dark+ theme)
 - **Document Processing**:
@@ -141,8 +146,9 @@ The application uses PostgreSQL with pgvector extension. The following tables ar
 **embeddings** (RAG mode with pgvector)
 
 - Stores document chunks as 768-dimensional vectors
-- Uses HNSW indexing for fast similarity search
-- Supports cosine similarity operations
+- Uses Google's gemini-embedding-001 with Matryoshka Representation Learning
+- HNSW indexing for fast cosine similarity search
+- Batch processing with memory optimization
 
 **message_sources**
 
@@ -321,21 +327,88 @@ After completing Phase 3, encountered and resolved several critical issues durin
 
 ---
 
-### 📅 Phase 5: RAG Mode - Part 1 (Document Processing)
+### ✅ Phase 5: RAG Mode - Part 1 (Document Processing) (COMPLETED)
 
-- [ ] Document upload and parsing
-- [ ] Text chunking with configurable parameters
-- [ ] Embedding generation
-- [ ] Storage in PostgreSQL with pgvector
+- [x] Document upload with file picker integration
+- [x] Multi-format document parsing (PDF, DOCX, TXT, MD)
+- [x] Intelligent text chunking with configurable parameters
+- [x] Smart boundary detection (paragraphs → sentences → words)
+- [x] Embedding generation using gemini-embedding-001
+- [x] Batch processing with memory optimization (3 chunks per batch)
+- [x] Database storage with pgvector (768-dimensional vectors)
+- [x] Document metadata tracking (size, type, chunk count)
+- [x] Progress notifications during upload
+- [x] Error handling with cleanup on failure
+- [x] File size limits (2MB max, 500KB text max, 500 chunks max)
+- [x] Infinite loop prevention in chunking algorithm
+
+**Outcome**: Complete document processing pipeline. Users can upload documents (PDF, DOCX, TXT, MD) which are parsed, chunked, embedded using Gemini's embedding model, and stored in PostgreSQL with pgvector. Ultra-small batch processing prevents memory crashes even with large documents.
+
+**Key Implementation Details**:
+
+- **Document Parsing**:
+    - PDF: pdf-parse library for text extraction
+    - DOCX: mammoth library for Word document conversion
+    - TXT/MD: Native Node.js fs for plain text files
+    - File validation and type checking before processing
+- **Text Chunking**:
+    - Configurable chunk size (default: 500 characters)
+    - Configurable overlap (default: 50 characters)
+    - Smart boundary detection: prefers paragraph breaks, then sentence breaks, then word breaks
+    - Infinite loop protection with 10,000 iteration safety limit
+    - Always advances forward to prevent stuck states
+- **Embedding Generation**:
+    - Model: gemini-embedding-001 with output_dimensionality=768
+    - Task type: RETRIEVAL_DOCUMENT for optimal RAG performance
+    - Matryoshka Representation Learning for efficient 768-dim vectors
+    - Rate limiting: 150ms between API calls to prevent throttling
+    - Zero-vector fallback on embedding errors
+- **Memory Optimization**:
+    - Ultra-small batches: 3 chunks processed at a time
+    - 100ms GC delay between batches
+    - Immediate database insertion after each batch
+    - Explicit memory cleanup (chunks array cleared)
+    - File size limits enforce safety boundaries
+- **Database Migration**:
+    - Implemented version-based migration system
+    - Migration to v2: Drop and recreate embeddings table with 768 dimensions
+    - Auto-migration on app startup when schema version < 2
+    - Supports future schema updates
+
+**Files Created/Modified**:
+
+- `electron/utils/documents.ts` (NEW) - Server-side document parsing utilities
+- `src/utils/documents.ts` (NEW) - Client-side text chunking and validation
+- Updated `src/utils/ai.ts` - Added generateEmbeddings() with Matryoshka config
+- Updated `src/components/ChatView/ChatView.tsx` - Document upload workflow with batched processing
+- Updated `electron/main.ts` - Added file picker, document parsing IPC handlers
+- Updated `electron/preload.ts` - Exposed file operations to renderer
+- Updated `electron/database/schema.ts` - Migration system with MIGRATE_TO_V2_SQL
+- Updated `electron/database/manager.ts` - Auto-migration logic
+- Updated `src/types/index.ts` - Added TextChunk, file operation types
+
+**Memory Safety Features**:
+
+1. File size validation before processing (2MB max)
+2. Text length validation (500KB max)
+3. Chunk count limiting (500 max with truncation)
+4. Batch size of 3 for minimal memory footprint
+5. Garbage collection delays between operations
+6. Try-catch protection around chunking
+7. Explicit memory cleanup on error paths
 
 ---
 
-### 📅 Phase 6: RAG Mode - Part 2 (Retrieval & Chat)
+### 📅 Phase 6: RAG Mode - Part 2 (Retrieval & Chat) (IN PROGRESS)
 
-- [ ] Vector similarity search
-- [ ] Context injection into prompts
-- [ ] Document reference display
-- [ ] Source citation in responses
+- [ ] Vector similarity search using pgvector cosine similarity
+- [ ] Query embedding generation for user messages
+- [ ] Top-N document chunk retrieval based on similarity threshold
+- [ ] Context injection into Gemini prompts
+- [ ] RAG-specific chat responses with document context
+- [ ] Document reference display in message UI
+- [ ] Source citation with similarity scores
+- [ ] Message-to-source linking in database
 
 ---
 
@@ -359,6 +432,6 @@ MIT
 ---
 
 **Last Updated**: February 23, 2026  
-**Current Phase**: Phase 4 Complete ✅ (Normal Chat Mode fully functional)  
-**Next Phase**: Phase 5 - RAG Mode Part 1 (Document Processing)  
-**Status**: Chat mode working with streaming AI responses, markdown rendering, syntax highlighting, configurable model selection, and full database persistence
+**Current Phase**: Phase 5 Complete ✅ (RAG Mode Part 1 - Document Processing fully functional)  
+**Next Phase**: Phase 6 - RAG Mode Part 2 (Vector Search & Context-Aware Chat)  
+**Status**: Full document processing pipeline working with intelligent chunking, gemini-embedding-001 integration, batch processing with memory optimization, and pgvector storage. Ready for vector similarity search implementation.
