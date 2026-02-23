@@ -19,6 +19,8 @@ import {
 } from "@ant-design/icons";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useAppStore } from "../../store";
 import { Message } from "../../types";
 import { sendMessageStreaming } from "../../utils/ai";
@@ -26,6 +28,30 @@ import "./ChatView.css";
 
 const { TextArea } = Input;
 const { Text, Title } = Typography;
+
+// Custom code block component with syntax highlighting
+const CodeBlock = ({
+	language,
+	children,
+}: {
+	language?: string;
+	children: string;
+}) => {
+	return (
+		<SyntaxHighlighter
+			style={vscDarkPlus}
+			language={language || "text"}
+			PreTag="div"
+			customStyle={{
+				margin: "12px 0",
+				borderRadius: "6px",
+				background: "#1e1e1e",
+			}}
+		>
+			{children}
+		</SyntaxHighlighter>
+	);
+};
 
 export const ChatView = () => {
 	const {
@@ -297,7 +323,43 @@ export const ChatView = () => {
 										</Text>
 									</div>
 									<div className="message-text markdown-content">
-										<ReactMarkdown remarkPlugins={[remarkGfm]}>
+										<ReactMarkdown
+											remarkPlugins={[remarkGfm]}
+											components={{
+												code(props) {
+													const {
+														children,
+														className,
+														...rest
+													} = props;
+													const match =
+														/language-(\w+)/.exec(
+															className || "",
+														);
+													return match ? (
+														<CodeBlock
+															language={match[1]}
+														>
+															{String(
+																children,
+															).replace(
+																/\n$/,
+																"",
+															)}
+														</CodeBlock>
+													) : (
+														<code
+															{...rest}
+															className={
+																className
+															}
+														>
+															{children}
+														</code>
+													);
+												},
+											}}
+										>
 											{message.content}
 										</ReactMarkdown>
 									</div>
@@ -359,7 +421,43 @@ export const ChatView = () => {
 										</Text>
 									</div>
 									<div className="message-text markdown-content">
-										<ReactMarkdown remarkPlugins={[remarkGfm]}>
+										<ReactMarkdown
+											remarkPlugins={[remarkGfm]}
+											components={{
+												code(props) {
+													const {
+														children,
+														className,
+														...rest
+													} = props;
+													const match =
+														/language-(\w+)/.exec(
+															className || "",
+														);
+													return match ? (
+														<CodeBlock
+															language={match[1]}
+														>
+															{String(
+																children,
+															).replace(
+																/\n$/,
+																"",
+															)}
+														</CodeBlock>
+													) : (
+														<code
+															{...rest}
+															className={
+																className
+															}
+														>
+															{children}
+														</code>
+													);
+												},
+											}}
+										>
 											{streamingMessage}
 										</ReactMarkdown>
 									</div>

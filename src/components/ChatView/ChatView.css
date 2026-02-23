@@ -189,6 +189,7 @@
 	font-size: 1.1em;
 }
 
+/* Inline code (not in blocks) */
 .markdown-content code {
 	background: rgba(255, 255, 255, 0.05);
 	padding: 2px 6px;
@@ -198,20 +199,19 @@
 	color: #ff6b6b;
 }
 
+/* Code block container - syntax highlighter handles internal styling */
 .markdown-content pre {
-	background: rgba(0, 0, 0, 0.3);
-	border: 1px solid #2a2a2a;
-	border-radius: 6px;
-	padding: 12px;
-	overflow-x: auto;
 	margin: 12px 0;
+	border-radius: 6px;
+	overflow: hidden;
 }
 
+/* Override for syntax highlighter code elements */
 .markdown-content pre code {
-	background: transparent;
-	padding: 0;
-	color: #fff;
+	background: transparent !important;
+	padding: 0 !important;
 	font-size: 0.9em;
+	color: inherit !important;
 }
 
 .markdown-content ul,
@@ -290,4 +290,20 @@
 .markdown-content del {
 	text-decoration: line-through;
 	color: #888;
+}
+
+/* Syntax highlighter overrides for better integration */
+.markdown-content div[class*="language-"] {
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.markdown-content pre[class*="language-"] {
+	margin: 12px 0 !important;
+	border-radius: 6px !important;
+}
+
+/* Ensure syntax highlighter scrolls horizontally on long lines */
+.markdown-content pre > div {
+	overflow-x: auto !important;
 }
