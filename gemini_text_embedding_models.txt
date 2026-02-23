@@ -1,0 +1,105 @@
+List out the text embedding models used with Gemini API
+
+Gemini said
+As of 2026, the text embedding models available via the Gemini API (and its enterprise counterpart, Vertex AI) have evolved to focus on a unified, high-performance architecture. Google has consolidated many of its older, specialized models into more versatile "Gemini-class" embeddings.
+
+The following models are currently used with the Gemini API:
+
+1. The Core Gemini Embedding Models
+These are the flagship models optimized for the Gemini ecosystem, supporting over 100 languages and various coding tasks.
+
+gemini-embedding-001: The primary stable version. It unifies previous capabilities (like English-only and multilingual) into a single model.
+
+Max Input: 2,048 tokens.
+
+Output Dimensions: Flexible (up to 3,072), using Matryoshka Representation Learning (MRL) to allow for smaller vector sizes without significant loss in accuracy.
+
+gemini-embedding-exp-03-07: A newer experimental version (released in 2025/2026) that expanded the input limit to 8,192 tokens, making it ideal for embedding much larger documents or long code blocks.
+
+2. Specialized Vertex AI Models
+While the Gemini API focuses on the unified models above, Vertex AI users often still see these specialized versions which are optimized for specific throughput and cost profiles:
+
+Model Name	Primary Use Case	Max Dimensions
+text-embedding-005	The latest general-purpose English and code model.	768
+text-multilingual-embedding-002	Optimized specifically for multilingual retrieval and cross-lingual tasks.	768
+text-embedding-004	(Legacy/Transition) A high-performance predecessor to 005.	768
+3. Key Features & Task Types
+When using these models, you can specify a task_type to optimize the vector for your specific application. This is a unique feature of Google’s embedding models:
+
+RETRIEVAL_QUERY: For the search query itself.
+
+RETRIEVAL_DOCUMENT: For the documents in your database/index.
+
+SEMANTIC_SIMILARITY: For comparing how similar two texts are.
+
+CLASSIFICATION / CLUSTERING: For organizing text into groups.
+
+YoutubeING: Specifically tuned for RAG (Retrieval-Augmented Generation) systems.
+
+CODE_RETRIEVAL_QUERY: For finding code snippets using natural language.
+
+Pro-Tip: Matryoshka Embeddings
+One of the best parts of the gemini-embedding-001 and newer models is Matryoshka Representation Learning (MRL). This allows you to request a smaller output dimension (e.g., 256 or 768 instead of 3072) in your API call. The model "nests" the most important information at the beginning of the vector, so you can save on storage costs while keeping high search accuracy.
+
+Would you like me to show you a Python snippet for how to implement the gemini-embedding-001 model with a specific task type?
+
+You said
+yes
+
+Gemini said
+Implementing Gemini's text embedding models is straightforward with the google-genai Python SDK. Below is a practical example of how to use the flagship gemini-embedding-001 model, including the important task_type and output_dimensionality parameters.
+
+Python Implementation Example
+Python
+from google import genai
+from google.genai import types
+
+# 1. Initialize the client
+# Ensure you have set the GOOGLE_API_KEY environment variable
+client = genai.Client()
+
+# 2. Generate embeddings for a RAG (Retrieval-Augmented Generation) system
+# We'll embed a document and a query using their respective task types
+document_text = "The speed of light in a vacuum is exactly 299,792,458 meters per second."
+query_text = "How fast is light?"
+
+# Embedding the document
+doc_result = client.models.embed_content(
+    model="gemini-embedding-001",
+    contents=document_text,
+    config=types.EmbedContentConfig(
+        task_type="RETRIEVAL_DOCUMENT",
+        title="Physics Facts", # Optional: title only for RETRIEVAL_DOCUMENT
+        output_dimensionality=768 # Using Matryoshka for smaller vector size
+    )
+)
+
+# Embedding the query
+query_result = client.models.embed_content(
+    model="gemini-embedding-001",
+    contents=query_text,
+    config=types.EmbedContentConfig(
+        task_type="RETRIEVAL_QUERY",
+        output_dimensionality=768
+    )
+)
+
+print(f"Document Vector (first 5 values): {doc_result.embeddings[0].values[:5]}")
+print(f"Vector Length: {len(doc_result.embeddings[0].values)}")
+Comparison of Current Models (2026)
+The ecosystem has shifted toward high-dimensional models that use Matryoshka Representation Learning (MRL), allowing one model to serve multiple storage needs.
+
+Model Name	Primary Env	Best For...	Max Input	Default Dim
+gemini-embedding-001	Gemini API	Multilingual RAG, search, and coding tasks.	2,048 tokens	3,072
+text-embedding-005	Vertex AI	High-throughput English production apps.	2,048 tokens	768
+text-multilingual-002	Vertex AI	Specialized non-English or cross-lingual tasks.	2,048 tokens	768
+Why the task_type Matters
+In many AI systems, a question ("How do I fix a leak?") and its answer ("Apply sealant to the pipe.") are semantically different. By using the correct task_type, Gemini maps these different structures into the same area of the vector space, significantly improving search accuracy:
+
+RETRIEVAL_DOCUMENT: Use this for your knowledge base/database items.
+
+RETRIEVAL_QUERY: Use this for the user's search string.
+
+YoutubeING: Use for questions in a RAG-specific pipeline.
+
+CODE_RETRIEVAL_QUERY: Use when searching for code snippets.

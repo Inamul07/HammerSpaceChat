@@ -1,5 +1,6 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import path from "path";
+import * as fs from "fs";
 import {
 	dbManager,
 	threadOperations,
@@ -7,6 +8,7 @@ import {
 	documentOperations,
 	embeddingOperations,
 } from "./database/index";
+import * as documentUtils from "./utils/documents";
 
 // __dirname is automatically available in CommonJS
 let mainWindow: BrowserWindow | null = null;
@@ -396,5 +398,62 @@ ipcMain.handle("embedding:count", async (_, threadId: string) => {
 		return { success: false, error: error.message };
 	}
 });
+
+/**
+ * File handling
+ */
+ipcMain.handle("file:pickFiles", async () => {
+	try {
+		const result = await dialog.showOpenDialog({
+			properties: ["openFile", "multiSelections"],
+			filters: [
+				{
+					name: "Documents",
+					extensions: ["pdf", "txt", "md", "docx"],
+				},
+			],
+		});
+
+		if (result.canceled) {
+			return { success: true, filePaths: [] };
+		}
+
+		return { success: true, filePaths: result.filePaths };
+	} catch (error: any) {
+		console.error("File picker error:", error);
+		return { success: false, error: error.message };
+	}
+});
+
+ipcMain.handle("file:readFile", async (_, filePath: string) => {
+	try {
+		const buffer = fs.readFileSync(filePath);
+		return { success: true, data: buffer };
+	} catch (error: any) {
+		console.error("File read error:", error);
+		return { success: false, error: error.message };
+	}
+});
+
+ipcMain.handle(
+	"file:parseDocument",
+	async (_, filePath: string, fileType: "pdf" | "txt" | "md" | "docx") => {
+		try {
+			const text = await documentUtils.parseDocument(filePath, fileType);
+			const fileName = documentUtils.getFileName(filePath);
+			const fileSize = documentUtils.getFileSize(filePath);
+
+			return {
+				success: true,
+				text,
+				fileName,
+				fileSize,
+			};
+		} catch (error: any) {
+			console.error("Document parse error:", error);
+			return { success: false, error: error.message };
+		}
+	},
+);
 
 export {};

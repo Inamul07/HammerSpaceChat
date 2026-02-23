@@ -6,6 +6,7 @@ import {
 	CREATE_VERSION_TABLE_SQL,
 	GET_VERSION_SQL,
 	MARK_SCHEMA_INITIALIZED_SQL,
+	MIGRATE_TO_V2_SQL,
 } from "./schema";
 
 /**
@@ -134,6 +135,14 @@ class DatabaseManager {
 		try {
 			console.log("Checking database schema...");
 
+			// Create version table first
+			await this.query(CREATE_VERSION_TABLE_SQL);
+
+			// Check current schema version
+			const versionResult = await this.query(GET_VERSION_SQL);
+			const currentVersion = versionResult.rows[0]?.version || 0;
+			console.log(`Current database schema version: ${currentVersion}`);
+
 			// Check if schema is initialized
 			const checkResult = await this.query(CHECK_SCHEMA_SQL);
 			const schemaExists = checkResult.rows[0]?.exists;
@@ -144,19 +153,34 @@ class DatabaseManager {
 				// Create all tables and indexes
 				await this.query(SCHEMA_SQL);
 
-				// Mark schema as initialized
+				// Mark schema as initialized with version 2
 				await this.query(MARK_SCHEMA_INITIALIZED_SQL);
 
-				console.log("✅ Database schema initialized successfully");
+				console.log(
+					"✅ Database schema initialized successfully (version 2)",
+				);
 			} else {
-				console.log("✅ Database schema already initialized");
+				// Schema exists, check if migration is needed
+				if (currentVersion < 2) {
+					console.log(
+						`Migrating database schema from version ${currentVersion} to version 2...`,
+					);
+
+					// Run migration to version 2 (update embeddings to 3072 dimensions)
+					await this.query(MIGRATE_TO_V2_SQL);
+
+					console.log(
+						"✅ Database migrated to version 2 (embeddings now use 3072 dimensions)",
+					);
+				} else {
+					console.log("✅ Database schema already at latest version");
+				}
 			}
 
-			// Create version table and check schema version
-			await this.query(CREATE_VERSION_TABLE_SQL);
-			const versionResult = await this.query(GET_VERSION_SQL);
-			const version = versionResult.rows[0]?.version || 0;
-			console.log(`Database schema version: ${version}`);
+			// Verify final version
+			const finalVersionResult = await this.query(GET_VERSION_SQL);
+			const finalVersion = finalVersionResult.rows[0]?.version || 0;
+			console.log(`Database schema version: ${finalVersion}`);
 		} catch (error) {
 			console.error("❌ Schema initialization failed:", error);
 			throw error;

@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS embeddings (
   thread_id UUID NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
   chunk_text TEXT NOT NULL,
   chunk_index INTEGER NOT NULL,
-  embedding vector(768), -- Google's text-embedding-004 uses 768 dimensions
+  embedding vector(768), -- gemini-embedding-001 with output_dimensionality=768
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
   FOREIGN KEY (thread_id) REFERENCES threads(id) ON DELETE CASCADE
@@ -135,6 +135,39 @@ SELECT COALESCE(MAX(version), 0) as version FROM schema_version;
  * Mark schema as initialized
  */
 export const MARK_SCHEMA_INITIALIZED_SQL = `
-INSERT INTO schema_version (version) VALUES (1)
+INSERT INTO schema_version (version) VALUES (2)
+ON CONFLICT (version) DO NOTHING;
+`;
+
+/**
+ * Migration to version 2: Update embeddings table to support gemini-embedding-001 with 768 dimensions
+ */
+export const MIGRATE_TO_V2_SQL = `
+-- Drop old embeddings table if it exists
+DROP TABLE IF EXISTS embeddings CASCADE;
+
+-- Recreate embeddings table with 768 dimensions for gemini-embedding-001 (Matryoshka mode)
+CREATE TABLE IF NOT EXISTS embeddings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  thread_id UUID NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
+  chunk_text TEXT NOT NULL,
+  chunk_index INTEGER NOT NULL,
+  embedding vector(768), -- gemini-embedding-001 with output_dimensionality=768
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+  FOREIGN KEY (thread_id) REFERENCES threads(id) ON DELETE CASCADE
+);
+
+-- Create index for vector similarity search (HNSW index for faster cosine similarity)
+CREATE INDEX IF NOT EXISTS idx_embeddings_vector ON embeddings 
+  USING hnsw (embedding vector_cosine_ops);
+
+-- Create index on document_id for faster retrieval
+CREATE INDEX IF NOT EXISTS idx_embeddings_document_id ON embeddings(document_id);
+CREATE INDEX IF NOT EXISTS idx_embeddings_thread_id ON embeddings(thread_id);
+
+-- Mark migration as complete
+INSERT INTO schema_version (version) VALUES (2)
 ON CONFLICT (version) DO NOTHING;
 `;

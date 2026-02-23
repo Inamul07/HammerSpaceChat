@@ -1,0 +1,28 @@
+ai.ts:122 
+       POST https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent 404 (Not Found)
+
+ai.ts:135 Embedding error for chunk 0: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent: [404 ] models/text-embedding-004 is not found for API version v1beta, or is not supported for embedContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (@google_generative-ai.js?v=2e4b1482:216:9)
+    at async makeRequest (@google_generative-ai.js?v=2e4b1482:192:5)
+    at async embedContent (@google_generative-ai.js?v=2e4b1482:816:20)
+    at async generateEmbeddings (ai.ts:122:19)
+    at async Object.handleUploadDocuments [as onClick] (ChatView.tsx:349:30)
+
+ai.ts:122 
+       POST https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent 404 (Not Found)
+
+ai.ts:135 Embedding error for chunk 1: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent: [404 ] models/text-embedding-004 is not found for API version v1beta, or is not supported for embedContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (@google_generative-ai.js?v=2e4b1482:216:9)
+    at async makeRequest (@google_generative-ai.js?v=2e4b1482:192:5)
+    at async embedContent (@google_generative-ai.js?v=2e4b1482:816:20)
+    at async generateEmbeddings (ai.ts:122:19)
+    at async Object.handleUploadDocuments [as onClick] (ChatView.tsx:349:30)
+
+POST https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent 404 (Not Found)
+
+Embedding error for chunk 2: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent: [404 ] models/text-embedding-004 is not found for API version v1beta, or is not supported for embedContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (@google_generative-ai.js?v=2e4b1482:216:9)
+    at async makeRequest (@google_generative-ai.js?v=2e4b1482:192:5)
+    at async embedContent (@google_generative-ai.js?v=2e4b1482:816:20)
+    at async generateEmbeddings (ai.ts:122:19)
+    at async Object.handleUploadDocuments [as onClick] (ChatView.tsx:349:30)

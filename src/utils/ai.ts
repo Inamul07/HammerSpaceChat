@@ -67,3 +67,86 @@ export async function sendMessage(
 		throw new Error(error.message || "Failed to get response from Gemini");
 	}
 }
+
+/**
+ * Generate embeddings for a single text using Gemini
+ * @param text - Text to generate embedding for
+ * @param apiKey - Gemini API key
+ * @returns 768-dimensional embedding vector (using Matryoshka learning)
+ */
+export async function generateEmbedding(
+	text: string,
+	apiKey: string,
+): Promise<number[]> {
+	if (!apiKey) {
+		throw new Error("Gemini API key is required");
+	}
+
+	const genAI = new GoogleGenerativeAI(apiKey);
+	const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
+
+	try {
+		// Request 768 dimensions using Matryoshka Representation Learning
+		const result = await model.embedContent({
+			content: { parts: [{ text }] },
+			taskType: "RETRIEVAL_DOCUMENT",
+			outputDimensionality: 768,
+		});
+		return result.embedding.values;
+	} catch (error: any) {
+		console.error("Gemini embedding error:", error);
+		throw new Error(
+			error.message || "Failed to generate embedding from Gemini",
+		);
+	}
+}
+
+/**
+ * Generate embeddings for multiple texts in batch
+ * @param texts - Array of texts to generate embeddings for
+ * @param apiKey - Gemini API key
+ * @param onProgress - Optional callback for progress updates
+ * @returns Array of 768-dimensional embedding vectors (using Matryoshka learning)
+ */
+export async function generateEmbeddings(
+	texts: string[],
+	apiKey: string,
+	onProgress?: (processed: number, total: number) => void,
+): Promise<number[][]> {
+	if (!apiKey) {
+		throw new Error("Gemini API key is required");
+	}
+
+	const genAI = new GoogleGenerativeAI(apiKey);
+	const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
+
+	const embeddings: number[][] = [];
+
+	for (let i = 0; i < texts.length; i++) {
+		try {
+			// Request 768 dimensions using Matryoshka Representation Learning
+			const result = await model.embedContent({
+				content: { parts: [{ text: texts[i] }] },
+				taskType: "RETRIEVAL_DOCUMENT",
+				outputDimensionality: 768,
+			});
+			embeddings.push(result.embedding.values);
+
+			if (onProgress) {
+				onProgress(i + 1, texts.length);
+			}
+
+			// Rate limiting: small delay between requests to prevent API throttling
+			// and allow garbage collection
+			if (i < texts.length - 1) {
+				await new Promise((resolve) => setTimeout(resolve, 150));
+			}
+		} catch (error: any) {
+			console.error(`Embedding error for chunk ${i}:`, error);
+			// Push a zero vector if embedding fails (768 dimensions)
+			embeddings.push(new Array(768).fill(0));
+		}
+	}
+
+	return embeddings;
+}

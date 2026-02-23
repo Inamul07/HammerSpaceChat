@@ -23,7 +23,12 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useAppStore } from "../../store";
 import { Message } from "../../types";
-import { sendMessageStreaming } from "../../utils/ai";
+import { sendMessageStreaming, generateEmbeddings } from "../../utils/ai";
+import {
+	chunkText,
+	getSupportedFileType,
+	TextChunk,
+} from "../../utils/documents";
 import "./ChatView.css";
 
 const { TextArea } = Input;
@@ -196,6 +201,221 @@ export const ChatView = () => {
 		}
 	};
 
+	const handleUploadDocuments = async () => {
+		if (!currentThreadId || !settings.geminiApiKey) {
+			antMessage.error(
+				"Please set your Gemini API key in Settings first",
+			);
+			return;
+		}
+
+		try {
+			// Open file picker
+			const result = await window.electronAPI.file.pickFiles();
+
+			if (
+				!result.success ||
+				!result.filePaths ||
+				result.filePaths.length === 0
+			) {
+				return; // User cancelled
+			}
+
+			const { ragConfig } = settings;
+
+			for (const filePath of result.filePaths) {
+				const fileName = filePath.split("/").pop() || "unknown";
+				const fileType = getSupportedFileType(fileName);
+
+				if (!fileType) {
+					antMessage.error(`Unsupported file type: ${fileName}`);
+					continue;
+				}
+
+				antMessage.loading({
+					content: `Processing ${fileName}...`,
+					key: fileName,
+					duration: 0,
+				});
+
+				// Parse document
+				const parseResult = await window.electronAPI.file.parseDocument(
+					filePath,
+					fileType,
+				);
+
+				if (!parseResult.success || !parseResult.text) {
+					antMessage.error({
+						content: `Failed to parse ${fileName}`,
+						key: fileName,
+					});
+					continue;
+				}
+
+				// STRICT memory limits to prevent OOM crashes
+				// File size limit: 2MB
+				const MAX_FILE_SIZE = 2 * 1024 * 1024;
+				if (
+					parseResult.fileSize &&
+					parseResult.fileSize > MAX_FILE_SIZE
+				) {
+					antMessage.error({
+						content: `File too large: ${fileName}. Maximum size is 2MB to prevent memory issues.`,
+						key: fileName,
+					});
+					continue;
+				}
+
+				// Text length limit: 500KB (500,000 characters)
+				// This is essential to prevent OOM during string operations
+				const MAX_TEXT_LENGTH = 500000;
+				if (parseResult.text.length > MAX_TEXT_LENGTH) {
+					antMessage.error({
+						content: `Document text too large: ${fileName} (${Math.round(parseResult.text.length / 1000)}KB). Maximum is 500KB.`,
+						key: fileName,
+					});
+					continue;
+				}
+
+				// Chunk the text with try-catch for safety
+				let chunks: TextChunk[];
+				try {
+					chunks = chunkText(
+						parseResult.text,
+						ragConfig.chunkSize,
+						ragConfig.chunkOverlap,
+					);
+				} catch (error: any) {
+					console.error("Chunking error:", error);
+					antMessage.error({
+						content: `Failed to process ${fileName}: Memory error. File may be too large.`,
+						key: fileName,
+					});
+					continue;
+				}
+
+				if (chunks.length === 0) {
+					antMessage.error({
+						content: `No text content found in ${fileName}`,
+						key: fileName,
+					});
+					continue;
+				}
+
+				// Limit number of chunks to prevent excessive memory usage
+				const MAX_CHUNKS = 500;
+				if (chunks.length > MAX_CHUNKS) {
+					antMessage.warning({
+						content: `Document has ${chunks.length} chunks. Limiting to ${MAX_CHUNKS} for memory safety.`,
+						key: fileName,
+					});
+					chunks = chunks.slice(0, MAX_CHUNKS);
+				}
+
+				// Create document record
+				const docResult = await window.electronAPI.document.create(
+					currentThreadId,
+					fileName,
+					fileType,
+					parseResult.fileSize || 0,
+				);
+
+				if (!docResult.success || !docResult.document) {
+					antMessage.error({
+						content: `Failed to save ${fileName}`,
+						key: fileName,
+					});
+					continue;
+				}
+
+				// Generate embeddings in ultra-small batches to avoid memory issues
+				// Using batch size of 3 for maximum memory safety
+				const BATCH_SIZE = 3;
+				const totalBatches = Math.ceil(chunks.length / BATCH_SIZE);
+				let processedChunks = 0;
+
+				for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
+					const startIdx = batchIdx * BATCH_SIZE;
+					const endIdx = Math.min(
+						startIdx + BATCH_SIZE,
+						chunks.length,
+					);
+					const batchChunks = chunks.slice(startIdx, endIdx);
+
+					antMessage.loading({
+						content: `Generating embeddings for ${fileName} (${processedChunks}/${chunks.length} chunks)...`,
+						key: fileName,
+						duration: 0,
+					});
+
+					// Generate embeddings for this batch
+					const batchTexts = batchChunks.map((c) => c.text);
+					const batchEmbeddings = await generateEmbeddings(
+						batchTexts,
+						settings.geminiApiKey,
+					);
+
+					// Prepare batch for insertion
+					const embeddingChunks = batchChunks.map((chunk, idx) => ({
+						text: chunk.text,
+						embedding: batchEmbeddings[idx],
+						index: chunk.index,
+					}));
+
+					// Store this batch immediately
+					const embedResult =
+						await window.electronAPI.embedding.batchInsert(
+							docResult.document.id,
+							currentThreadId,
+							embeddingChunks,
+						);
+
+					if (!embedResult.success) {
+						antMessage.error({
+							content: `Failed to store embeddings for ${fileName}`,
+							key: fileName,
+						});
+						// Clean up document record
+						await window.electronAPI.document.delete(
+							docResult.document.id,
+						);
+						// Release memory
+						chunks = [];
+						continue;
+					}
+
+					processedChunks += batchChunks.length;
+
+					// Increase delay to allow garbage collection between batches
+					await new Promise((resolve) => setTimeout(resolve, 100));
+				}
+
+				// Save chunk count before releasing memory
+				const totalChunks = chunks.length;
+
+				// Release large objects from memory after processing
+				chunks = [];
+
+				// Update document chunk count
+				const updatedDoc = {
+					...docResult.document,
+					chunk_count: totalChunks,
+				};
+
+				// Add to UI
+				setDocuments([...documents, updatedDoc]);
+
+				antMessage.success({
+					content: `Successfully uploaded ${fileName} (${totalChunks} chunks)`,
+					key: fileName,
+				});
+			}
+		} catch (error: any) {
+			console.error("Document upload error:", error);
+			antMessage.error(error.message || "Failed to upload documents");
+		}
+	};
+
 	if (!currentThread) {
 		return (
 			<div className="chat-empty">
@@ -235,9 +455,8 @@ export const ChatView = () => {
 				{currentThread.type === "rag" && (
 					<Button
 						icon={<UploadOutlined />}
-						onClick={() => {
-							/* Document upload will be implemented in Phase 5 */
-						}}
+						onClick={handleUploadDocuments}
+						disabled={!settings.geminiApiKey}
 					>
 						Upload Documents
 					</Button>

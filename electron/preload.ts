@@ -22,9 +22,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
 	// File operations
 	file: {
-		pickFiles: () => ipcRenderer.invoke("file:pick"),
+		pickFiles: () => ipcRenderer.invoke("file:pickFiles"),
 		readFile: (filePath: string) =>
-			ipcRenderer.invoke("file:read", filePath),
+			ipcRenderer.invoke("file:readFile", filePath),
+		parseDocument: (
+			filePath: string,
+			fileType: "pdf" | "txt" | "md" | "docx",
+		) => ipcRenderer.invoke("file:parseDocument", filePath, fileType),
 	},
 
 	// Thread operations

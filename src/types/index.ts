@@ -26,8 +26,26 @@ export interface ElectronAPI {
 		) => Promise<void>;
 	};
 	file: {
-		pickFiles: () => Promise<string[]>;
-		readFile: (filePath: string) => Promise<Buffer>;
+		pickFiles: () => Promise<{
+			success: boolean;
+			filePaths?: string[];
+			error?: string;
+		}>;
+		readFile: (filePath: string) => Promise<{
+			success: boolean;
+			data?: Buffer;
+			error?: string;
+		}>;
+		parseDocument: (
+			filePath: string,
+			fileType: "pdf" | "txt" | "md" | "docx",
+		) => Promise<{
+			success: boolean;
+			text?: string;
+			fileName?: string;
+			fileSize?: number;
+			error?: string;
+		}>;
 	};
 	thread: {
 		create: (
