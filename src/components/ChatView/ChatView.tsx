@@ -660,6 +660,25 @@ Answer:`;
 														</code>
 													);
 												},
+												a(props) {
+													const { href, children } =
+														props;
+													return (
+														<a
+															href={href}
+															onClick={(e) => {
+																e.preventDefault();
+																if (href) {
+																	window.electronAPI.shell.openExternal(
+																		href,
+																	);
+																}
+															}}
+														>
+															{children}
+														</a>
+													);
+												},
 											}}
 										>
 											{message.content}
@@ -756,6 +775,25 @@ Answer:`;
 														>
 															{children}
 														</code>
+													);
+												},
+												a(props) {
+													const { href, children } =
+														props;
+													return (
+														<a
+															href={href}
+															onClick={(e) => {
+																e.preventDefault();
+																if (href) {
+																	window.electronAPI.shell.openExternal(
+																		href,
+																	);
+																}
+															}}
+														>
+															{children}
+														</a>
 													);
 												},
 											}}

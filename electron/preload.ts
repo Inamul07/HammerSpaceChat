@@ -121,6 +121,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
 			ipcRenderer.invoke("messageSource:getByMessage", messageId),
 	},
 
+	// Shell operations
+	shell: {
+		openExternal: (url: string) =>
+			ipcRenderer.invoke("shell:openExternal", url),
+	},
+
 	// Event listeners
 	on: (channel: string, callback: (...args: any[]) => void) => {
 		ipcRenderer.on(channel, (_, ...args) => callback(...args));

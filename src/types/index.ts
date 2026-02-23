@@ -145,6 +145,11 @@ export interface ElectronAPI {
 			error?: string;
 		}>;
 	};
+	shell: {
+		openExternal: (
+			url: string,
+		) => Promise<{ success: boolean; error?: string }>;
+	};
 	on: (channel: string, callback: (...args: any[]) => void) => void;
 	off: (channel: string, callback: (...args: any[]) => void) => void;
 }

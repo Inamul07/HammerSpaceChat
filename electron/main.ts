@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, shell } from "electron";
 import path from "path";
 import * as fs from "fs";
 import {
@@ -446,6 +446,19 @@ ipcMain.handle("messageSource:getByMessage", async (_, messageId: string) => {
 		return { success: true, sources };
 	} catch (error: any) {
 		console.error("Get message sources error:", error);
+		return { success: false, error: error.message };
+	}
+});
+
+/**
+ * Shell operations
+ */
+ipcMain.handle("shell:openExternal", async (_, url: string) => {
+	try {
+		await shell.openExternal(url);
+		return { success: true };
+	} catch (error: any) {
+		console.error("Shell openExternal error:", error);
 		return { success: false, error: error.message };
 	}
 });
