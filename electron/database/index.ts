@@ -7,5 +7,6 @@ export {
 	messageOperations,
 	documentOperations,
 	embeddingOperations,
+	messageSourceOperations,
 } from "./operations";
 export * from "./schema";

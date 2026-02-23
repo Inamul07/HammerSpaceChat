@@ -126,6 +126,21 @@ export interface ElectronAPI {
 			threadId: string,
 		) => Promise<{ success: boolean; count?: number; error?: string }>;
 	};
+	messageSource: {
+		batchInsert: (
+			messageId: string,
+			sources: Array<{
+				documentId: string;
+				embeddingId: string;
+				similarityScore: number;
+			}>,
+		) => Promise<{ success: boolean; error?: string }>;
+		getByMessage: (messageId: string) => Promise<{
+			success: boolean;
+			sources?: DocumentSource[];
+			error?: string;
+		}>;
+	};
 	on: (channel: string, callback: (...args: any[]) => void) => void;
 	off: (channel: string, callback: (...args: any[]) => void) => void;
 }

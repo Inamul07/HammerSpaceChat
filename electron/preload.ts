@@ -107,6 +107,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
 			ipcRenderer.invoke("embedding:count", threadId),
 	},
 
+	// Message source operations (RAG mode)
+	messageSource: {
+		batchInsert: (messageId: string, sources: any[]) =>
+			ipcRenderer.invoke("messageSource:batchInsert", messageId, sources),
+		getByMessage: (messageId: string) =>
+			ipcRenderer.invoke("messageSource:getByMessage", messageId),
+	},
+
 	// Event listeners
 	on: (channel: string, callback: (...args: any[]) => void) => {
 		ipcRenderer.on(channel, (_, ...args) => callback(...args));

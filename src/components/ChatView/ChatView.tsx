@@ -23,7 +23,11 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useAppStore } from "../../store";
 import { Message } from "../../types";
-import { sendMessageStreaming, generateEmbeddings } from "../../utils/ai";
+import {
+	sendMessageStreaming,
+	generateEmbeddings,
+	generateQueryEmbedding,
+} from "../../utils/ai";
 import {
 	chunkText,
 	getSupportedFileType,
@@ -159,10 +163,65 @@ export const ChatView = () => {
 			// Add user message to UI
 			addMessage(userMsgResult.message);
 
+			let finalPrompt = userMessage;
+			let retrievedSources: any[] = [];
+
+			// For RAG mode, retrieve context from documents
+			if (currentThread?.type === "rag") {
+				try {
+					// Generate query embedding
+					const queryEmbedding = await generateQueryEmbedding(
+						userMessage,
+						settings.geminiApiKey,
+					);
+
+					// Search for similar chunks
+					const searchResult =
+						await window.electronAPI.embedding.search(
+							currentThreadId,
+							queryEmbedding,
+							settings.ragConfig.retrievalCount,
+							settings.ragConfig.similarityThreshold,
+						);
+
+					if (
+						searchResult.success &&
+						searchResult.results &&
+						searchResult.results.length > 0
+					) {
+						retrievedSources = searchResult.results;
+
+						// Build context from retrieved chunks
+						const context = searchResult.results
+							.map(
+								(result, idx) =>
+									`[${idx + 1}] From "${result.documentName}":\n${result.chunkText}`,
+							)
+							.join("\n\n");
+
+						// Inject context into prompt
+						finalPrompt = `You are a helpful assistant. Use the following context to answer the user's question. If the context doesn't contain relevant information, say so and provide a general answer.
+
+Context:
+${context}
+
+User Question: ${userMessage}
+
+Answer:`;
+					}
+				} catch (error) {
+					console.error("RAG retrieval error:", error);
+					// Continue with normal chat if RAG fails
+					antMessage.warning(
+						"Failed to retrieve document context. Responding without context.",
+					);
+				}
+			}
+
 			// Get AI response with streaming
 			let fullResponse = "";
 			await sendMessageStreaming(
-				userMessage,
+				finalPrompt,
 				settings.geminiApiKey,
 				settings.geminiModel,
 				(chunk) => {
@@ -185,6 +244,24 @@ export const ChatView = () => {
 				throw new Error(
 					assistantMsgResult.error ||
 						"Failed to save assistant message",
+				);
+			}
+
+			// Link message to sources if using RAG
+			if (
+				currentThread?.type === "rag" &&
+				retrievedSources.length > 0 &&
+				assistantMsgResult.message
+			) {
+				const sources = retrievedSources.map((source) => ({
+					documentId: source.documentId,
+					embeddingId: source.id,
+					similarityScore: source.similarity,
+				}));
+
+				await window.electronAPI.messageSource.batchInsert(
+					assistantMsgResult.message.id,
+					sources,
 				);
 			}
 

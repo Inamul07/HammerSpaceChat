@@ -388,3 +388,76 @@ export const embeddingOperations = {
 		return parseInt(result.rows[0]?.count || "0");
 	},
 };
+
+/**
+ * Message source operations (for RAG mode)
+ */
+export const messageSourceOperations = {
+	/**
+	 * Link a message to its source chunks
+	 */
+	async batchInsert(
+		messageId: string,
+		sources: Array<{
+			documentId: string;
+			embeddingId: string;
+			similarityScore: number;
+		}>,
+	): Promise<void> {
+		if (sources.length === 0) return;
+
+		await dbManager.transaction(async (client) => {
+			for (const source of sources) {
+				await client.query(
+					`INSERT INTO message_sources (message_id, document_id, embedding_id, similarity_score)
+					 VALUES ($1, $2, $3, $4)`,
+					[
+						messageId,
+						source.documentId,
+						source.embeddingId,
+						source.similarityScore,
+					],
+				);
+			}
+		});
+	},
+
+	/**
+	 * Get sources for a specific message
+	 */
+	async getByMessage(messageId: string): Promise<DocumentSource[]> {
+		const result = await dbManager.query(
+			`SELECT 
+				ms.id,
+				ms.document_id,
+				ms.embedding_id,
+				ms.similarity_score,
+				d.name as document_name,
+				e.chunk_text,
+				e.chunk_index
+			 FROM message_sources ms
+			 JOIN documents d ON ms.document_id = d.id
+			 JOIN embeddings e ON ms.embedding_id = e.id
+			 WHERE ms.message_id = $1
+			 ORDER BY ms.similarity_score DESC`,
+			[messageId],
+		);
+
+		return result.rows.map((row) => ({
+			document_id: row.document_id,
+			document_name: row.document_name,
+			chunk_text: row.chunk_text,
+			similarity: parseFloat(row.similarity_score),
+		}));
+	},
+
+	/**
+	 * Delete sources for a message
+	 */
+	async deleteByMessage(messageId: string): Promise<void> {
+		await dbManager.query(
+			`DELETE FROM message_sources WHERE message_id = $1`,
+			[messageId],
+		);
+	},
+};

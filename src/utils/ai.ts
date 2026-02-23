@@ -102,6 +102,39 @@ export async function generateEmbedding(
 }
 
 /**
+ * Generate query embedding for vector search (optimized for RAG retrieval)
+ * @param query - User query text
+ * @param apiKey - Gemini API key
+ * @returns 768-dimensional embedding vector optimized for search
+ */
+export async function generateQueryEmbedding(
+	query: string,
+	apiKey: string,
+): Promise<number[]> {
+	if (!apiKey) {
+		throw new Error("Gemini API key is required");
+	}
+
+	const genAI = new GoogleGenerativeAI(apiKey);
+	const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
+
+	try {
+		// Use RETRIEVAL_QUERY task type for user queries
+		const result = await model.embedContent({
+			content: { parts: [{ text: query }] },
+			taskType: "RETRIEVAL_QUERY",
+			outputDimensionality: 768,
+		});
+		return result.embedding.values;
+	} catch (error: any) {
+		console.error("Gemini query embedding error:", error);
+		throw new Error(
+			error.message || "Failed to generate query embedding from Gemini",
+		);
+	}
+}
+
+/**
  * Generate embeddings for multiple texts in batch
  * @param texts - Array of texts to generate embeddings for
  * @param apiKey - Gemini API key

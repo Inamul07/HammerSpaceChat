@@ -7,6 +7,7 @@ import {
 	messageOperations,
 	documentOperations,
 	embeddingOperations,
+	messageSourceOperations,
 } from "./database/index";
 import * as documentUtils from "./utils/documents";
 
@@ -395,6 +396,40 @@ ipcMain.handle("embedding:count", async (_, threadId: string) => {
 		return { success: true, count };
 	} catch (error: any) {
 		console.error("Embedding count error:", error);
+		return { success: false, error: error.message };
+	}
+});
+
+/**
+ * Message source operations (RAG mode)
+ */
+ipcMain.handle(
+	"messageSource:batchInsert",
+	async (
+		_,
+		messageId: string,
+		sources: Array<{
+			documentId: string;
+			embeddingId: string;
+			similarityScore: number;
+		}>,
+	) => {
+		try {
+			await messageSourceOperations.batchInsert(messageId, sources);
+			return { success: true };
+		} catch (error: any) {
+			console.error("Message source batch insert error:", error);
+			return { success: false, error: error.message };
+		}
+	},
+);
+
+ipcMain.handle("messageSource:getByMessage", async (_, messageId: string) => {
+	try {
+		const sources = await messageSourceOperations.getByMessage(messageId);
+		return { success: true, sources };
+	} catch (error: any) {
+		console.error("Get message sources error:", error);
 		return { success: false, error: error.message };
 	}
 });

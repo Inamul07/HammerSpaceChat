@@ -5,10 +5,12 @@ An AI Chat application with Normal Chat and RAG (Retrieval-Augmented Generation)
 ## 🎯 Features
 
 - **Normal Chat Mode**: Direct conversations with AI models with markdown support
-- **RAG Mode**: Context-aware chat using your documents (Vector search coming soon)
+- **RAG Mode**: Context-aware chat using your documents with vector similarity search
 - **Thread Management**: Organize conversations in separate threads
 - **Document Processing**: Upload and process PDF, TXT, MD, and DOCX files with intelligent chunking
 - **Vector Embeddings**: Generate 768-dimensional embeddings using gemini-embedding-001 with Matryoshka learning
+- **Similarity Search**: Fast vector search using pgvector with HNSW indexing
+- **Source Citations**: View which documents were used to generate each response
 - **Batch Processing**: Memory-optimized batch processing for large documents
 - **Configurable RAG**: Customize chunk size, retrieval count, and similarity thresholds
 - **Streaming Responses**: Real-time response streaming from AI
@@ -399,16 +401,92 @@ After completing Phase 3, encountered and resolved several critical issues durin
 
 ---
 
-### 📅 Phase 6: RAG Mode - Part 2 (Retrieval & Chat) (IN PROGRESS)
+### ✅ Phase 6: RAG Mode - Part 2 (Vector Search & Context-Aware Chat) (COMPLETED)
 
-- [ ] Vector similarity search using pgvector cosine similarity
-- [ ] Query embedding generation for user messages
-- [ ] Top-N document chunk retrieval based on similarity threshold
-- [ ] Context injection into Gemini prompts
-- [ ] RAG-specific chat responses with document context
-- [ ] Document reference display in message UI
-- [ ] Source citation with similarity scores
-- [ ] Message-to-source linking in database
+- [x] Vector similarity search using pgvector cosine similarity
+- [x] Query embedding generation for user messages with RETRIEVAL_QUERY task type
+- [x] Top-N document chunk retrieval based on similarity threshold
+- [x] Context injection into Gemini prompts with structured format
+- [x] RAG-specific chat responses with document context
+- [x] Document reference display in message UI
+- [x] Source citation with similarity scores and document names
+- [x] Message-to-source linking in database with junction table
+
+**Outcome**: Full RAG (Retrieval-Augmented Generation) chat mode is now functional. When users send messages in RAG threads, the system automatically:
+
+1. Generates query embeddings using gemini-embedding-001 (RETRIEVAL_QUERY task type)
+2. Performs vector similarity search against uploaded document chunks
+3. Retrieves top-N most relevant contexts based on similarity threshold
+4. Injects retrieved context into Gemini prompt with numbered references
+5. Displays source citations with document names and similarity scores in UI
+6. Links assistant messages to source documents in database
+
+**Key Implementation Details**:
+
+- **Query Embedding Generation**:
+    - Function: `generateQueryEmbedding()` in `src/utils/ai.ts`
+    - Uses taskType: "RETRIEVAL_QUERY" (optimized for search queries)
+    - Different from document embeddings which use "RETRIEVAL_DOCUMENT"
+    - Returns 768-dimensional vectors for cosine similarity matching
+
+- **Vector Similarity Search**:
+    - Uses pgvector's `<=>` operator for efficient cosine distance calculation
+    - HNSW indexing for fast approximate nearest neighbor search
+    - Configurable similarity threshold (default: 0.7)
+    - Configurable retrieval count (default: 5 top results)
+    - Results sorted by distance (closest/most similar first)
+
+- **Context Injection**:
+    - Structured prompt template: "You are a helpful assistant. Use the following context to answer..."
+    - Numbered source references: [1], [2], [3], etc.
+    - Each context includes document name and chunk text
+    - Clear instructions for AI to cite sources in responses
+    - Fallback to normal chat if retrieval fails
+
+- **Message-Source Linking**:
+    - New operation: `messageSourceOperations.batchInsert()`
+    - Stores links between assistant messages and retrieved chunks
+    - Tracks similarity scores for each source
+    - Enables source display in UI and future analytics
+    - Atomic database transactions for data integrity
+
+- **Source Citation UI**:
+    - Display component in message list showing document sources
+    - Ant Design Tags with FileTextOutlined icons
+    - Shows document name and similarity percentage
+    - Styled with flexbox layout and proper spacing
+    - Only visible for RAG mode assistant responses with sources
+
+**Files Created/Modified**:
+
+- Updated `src/utils/ai.ts` - Added generateQueryEmbedding() with RETRIEVAL_QUERY task type
+- Updated `electron/database/operations.ts` - Added messageSourceOperations (batchInsert, getByMessage, deleteByMessage)
+- Updated `electron/database/index.ts` - Exported messageSourceOperations
+- Updated `electron/main.ts` - Added IPC handlers for messageSource operations
+- Updated `electron/preload.ts` - Exposed messageSource API to renderer
+- Updated `src/types/index.ts` - Added messageSource to ElectronAPI interface
+- Updated `src/components/ChatView/ChatView.tsx` - Implemented full RAG workflow in handleSendMessage
+- Updated `src/components/ChatView/ChatView.css` - Added message-sources styling
+- Updated `electron/database/operations.ts` - Modified messageOperations.listByThread to include sources via LEFT JOIN
+
+**RAG Workflow in Detail**:
+
+1. **User sends message** in RAG thread
+2. **Query embedding generated** using gemini-embedding-001 with RETRIEVAL_QUERY task type
+3. **Vector search** finds top-N similar chunks using cosine similarity
+4. **Context built** from retrieved chunks with document names and chunk text
+5. **Prompt injected** with context and instructions to cite sources
+6. **AI generates** response using provided context
+7. **Assistant message created** in database
+8. **Sources linked** to message via messageSourceOperations.batchInsert
+9. **UI displays** message with source citations showing documents and similarity scores
+
+**Configuration Options**:
+
+- `retrievalCount`: Number of chunks to retrieve (default: 5)
+- `similarityThreshold`: Minimum similarity score (default: 0.7, range: 0-1)
+- `chunkSize`: Size of text chunks for embedding (default: 500)
+- `chunkOverlap`: Overlap between chunks (default: 50)
 
 ---
 
@@ -432,6 +510,6 @@ MIT
 ---
 
 **Last Updated**: February 23, 2026  
-**Current Phase**: Phase 5 Complete ✅ (RAG Mode Part 1 - Document Processing fully functional)  
-**Next Phase**: Phase 6 - RAG Mode Part 2 (Vector Search & Context-Aware Chat)  
-**Status**: Full document processing pipeline working with intelligent chunking, gemini-embedding-001 integration, batch processing with memory optimization, and pgvector storage. Ready for vector similarity search implementation.
+**Current Phase**: Phase 6 Complete ✅ (RAG Mode Part 2 - Vector Search & Context-Aware Chat fully functional)  
+**Next Phase**: Phase 7 - Polish & Configuration  
+**Status**: Full RAG chat pipeline operational! Users can upload documents (PDF, DOCX, TXT, MD), which are chunked and embedded. When asking questions in RAG threads, the system performs vector similarity search, retrieves relevant contexts, injects them into AI prompts, and displays source citations with similarity scores. Both Normal Chat and RAG modes fully functional.
