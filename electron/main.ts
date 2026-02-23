@@ -40,7 +40,9 @@ function createWindow() {
 		mainWindow.loadURL("http://localhost:5173");
 		mainWindow.webContents.openDevTools();
 	} else {
-		mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
+		// In production, use app.getAppPath() to get the correct base path
+		const appPath = app.getAppPath();
+		mainWindow.loadFile(path.join(appPath, "dist", "index.html"));
 	}
 
 	mainWindow.on("closed", () => {
