@@ -4,12 +4,13 @@ An AI Chat application with Normal Chat and RAG (Retrieval-Augmented Generation)
 
 ## 🎯 Features
 
-- **Normal Chat Mode**: Direct conversations with AI models
+- **Normal Chat Mode**: Direct conversations with AI models with markdown support
 - **RAG Mode**: Context-aware chat using your documents
 - **Thread Management**: Organize conversations in separate threads
 - **Document Processing**: Upload and process PDF, TXT, MD, and DOCX files
 - **Configurable RAG**: Customize chunk size, retrieval count, and similarity thresholds
 - **Streaming Responses**: Real-time response streaming from AI
+- **Markdown Rendering**: Full GitHub Flavored Markdown support with syntax highlighting
 - **Dark Mode UI**: Built with Ant Design for a sleek dark interface
 
 ## 🛠️ Tech Stack
@@ -20,6 +21,8 @@ An AI Chat application with Normal Chat and RAG (Retrieval-Augmented Generation)
 - **State Management**: Zustand
 - **Database**: PostgreSQL with pgvector extension
 - **AI Provider**: Google Gemini API (with support for more providers)
+- **Markdown Rendering**: react-markdown + remark-gfm
+- **Syntax Highlighting**: react-syntax-highlighter (VS Code Dark+ theme)
 - **Document Processing**:
     - PDF: pdf-parse
     - DOCX: mammoth
@@ -281,17 +284,35 @@ After completing Phase 3, encountered and resolved several critical issues durin
 - [x] Configurable model selection (Gemini 2.5 Pro, Flash, Flash Lite, 1.5 series)
 - [x] Error handling with user-friendly messages
 - [x] API key validation
+- [x] Markdown rendering with GitHub Flavored Markdown support
+- [x] Syntax highlighting for code blocks (180+ languages)
 
-**Outcome**: Full Normal Chat Mode working with streaming AI responses. Users can create chat threads, send messages, and receive AI responses in real-time.
+**Outcome**: Full Normal Chat Mode working with streaming AI responses. Users can create chat threads, send messages, and receive AI responses in real-time with rich markdown formatting and syntax-highlighted code blocks.
 
 **Files Created/Modified**:
+
 - `src/utils/ai.ts` - Gemini API integration with streaming support
-- Updated `src/components/ChatView/ChatView.tsx` - Added message sending, streaming display, error handling
+- Updated `src/components/ChatView/ChatView.tsx` - Message sending, streaming display, markdown rendering, syntax highlighting
+- Updated `src/components/ChatView/ChatView.css` - Markdown and code block styling
 - Updated `src/components/SettingsModal/SettingsModal.tsx` - Added model selector dropdown
 - Updated `src/types/index.ts` - Added GeminiModel type and GEMINI_MODELS constant
 - Updated `src/store/index.ts` - Added geminiModel to settings state
 
+**Markdown Features**:
+
+- Headings (H1-H6), paragraphs, line breaks
+- Bold, italic, strikethrough text formatting
+- Ordered and unordered lists
+- Code blocks with syntax highlighting (VS Code Dark+ theme)
+- Inline code with accent coloring
+- Tables with styling
+- Blockquotes with visual accent
+- Links with hover effects
+- Horizontal rules
+- Task lists (GitHub Flavored Markdown)
+
 **Available Models**:
+
 - Gemini 2.5 Flash (Recommended) - Industry leader for price-to-performance
 - Gemini 2.5 Pro (Most Capable) - High-end reasoning with massive context
 - Gemini 2.5 Flash Lite - Ultra-cost-efficient for simple tasks
@@ -337,7 +358,7 @@ MIT
 
 ---
 
-**Last Updated**: February 22, 2026  
+**Last Updated**: February 23, 2026  
 **Current Phase**: Phase 4 Complete ✅ (Normal Chat Mode fully functional)  
 **Next Phase**: Phase 5 - RAG Mode Part 1 (Document Processing)  
-**Status**: Chat mode working with streaming AI responses, configurable model selection, and full database persistence
+**Status**: Chat mode working with streaming AI responses, markdown rendering, syntax highlighting, configurable model selection, and full database persistence
