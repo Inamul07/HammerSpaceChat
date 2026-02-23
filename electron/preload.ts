@@ -77,6 +77,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
 			ipcRenderer.invoke("document:list", threadId),
 		get: (documentId: string) =>
 			ipcRenderer.invoke("document:get", documentId),
+		updateChunkCount: (documentId: string, chunkCount: number) =>
+			ipcRenderer.invoke(
+				"document:updateChunkCount",
+				documentId,
+				chunkCount,
+			),
 		delete: (documentId: string) =>
 			ipcRenderer.invoke("document:delete", documentId),
 	},

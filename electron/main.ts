@@ -328,6 +328,22 @@ ipcMain.handle("document:get", async (_, documentId: string) => {
 });
 
 /**
+ * Update document chunk count
+ */
+ipcMain.handle(
+	"document:updateChunkCount",
+	async (_, documentId: string, chunkCount: number) => {
+		try {
+			await documentOperations.updateChunkCount(documentId, chunkCount);
+			return { success: true };
+		} catch (error: any) {
+			console.error("Document update chunk count error:", error);
+			return { success: false, error: error.message };
+		}
+	},
+);
+
+/**
  * Delete a document
  */
 ipcMain.handle("document:delete", async (_, documentId: string) => {

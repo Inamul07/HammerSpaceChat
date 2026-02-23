@@ -473,7 +473,13 @@ Answer:`;
 				// Release large objects from memory after processing
 				chunks = [];
 
-				// Update document chunk count
+				// Update document chunk count in database
+				await window.electronAPI.document.updateChunkCount(
+					docResult.document.id,
+					totalChunks,
+				);
+
+				// Update document chunk count in UI
 				const updatedDoc = {
 					...docResult.document,
 					chunk_count: totalChunks,

@@ -102,6 +102,10 @@ export interface ElectronAPI {
 		get: (
 			documentId: string,
 		) => Promise<{ success: boolean; document?: Document; error?: string }>;
+		updateChunkCount: (
+			documentId: string,
+			chunkCount: number,
+		) => Promise<{ success: boolean; error?: string }>;
 		delete: (
 			documentId: string,
 		) => Promise<{ success: boolean; error?: string }>;
