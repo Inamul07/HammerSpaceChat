@@ -2,7 +2,7 @@
 	"name": "hammerspace-chat",
 	"version": "0.1.0",
 	"description": "AI Chat application with Normal Chat and RAG modes",
-	"main": "dist-electron/main.js",
+	"main": "dist-electron/electron/main.js",
 	"author": "HammerSpace Team",
 	"license": "MIT",
 	"private": true,
@@ -13,7 +13,7 @@
 		"build:electron:watch": "tsc -p tsconfig.electron.json --watch",
 		"lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
 		"preview": "vite preview",
-		"electron:dev": "npm run build:electron && concurrently \"npm run build:electron:watch\" \"vite\" \"wait-on http://localhost:5173 && wait-on dist-electron/main.js && cross-env NODE_ENV=development electron .\"",
+		"electron:dev": "npm run build:electron && concurrently \"npm run build:electron:watch\" \"vite\" \"wait-on http://localhost:5173 && wait-on dist-electron/electron/main.js && cross-env NODE_ENV=development electron .\"",
 		"electron:build": "npm run build:electron && vite build && electron-builder"
 	},
 	"dependencies": {
